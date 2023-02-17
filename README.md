@@ -59,23 +59,91 @@ var (
 ```
 #### Strings, Booleans
 ```go
-var String string
-var Boolean bool
+package main 
+import "fmt"
+func main() {
+    var s string = "string"
+    var b bool
+    fmt.Println(s, b)
+}
 ```
 #### Collections
+Array cannot be resized after declaring its length. <br>
+Slice dynamically sized, more flexible.
 ```go
-var Array [69]string
-var Slice []string
-var Map map[string]string{}
-```
+package main
 
+import "fmt"
+
+func main() {
+    var arr = [3]string {"This", "Is", "Array"} 
+    var slice = []string {"This", "Is", "Slice"}
+    var m = make(map[string]string)
+    m["key"] = "value"
+
+    fmt.Printf("%+v, length:%d \n", arr, len(arr))
+    fmt.Printf("%v, length:%d \n", slice, len(slice))
+    fmt.Println("map: ", m)
+}
+
+```
+#### Zero values
+```go
+package main
+
+import "fmt"
+
+func main() {
+    var i int //output 0
+    var f float32 //output 0
+    var b bool //output false
+    var s string // output ""
+    
+    fmt.Printf("%v, %v, %v, %q \n", i, f, b, s)
+}
+
+
+```
+#### Constants
+Constant declare with `const` keyword <br>
+Constant can be character, string, boolean or numeric value. <br>
+Cannot be declared using `:=` syntax
+
+```go
+package main
+
+import "fmt"
+
+func main()  {
+    const A = "Constant String"
+    //will give you this message when you run go run main.go
+    //cannot assign to A (untyped string constant "Constant String")
+    // A = "bc"
+
+    fmt.Println(A)
+}
+```
 ---
 
 [//]: # ()
 ## Conditionals
 Arithmetic, assignment, logical/bitwise comparison
 ### Conditionals
-> if/else/else if
+```go
+package main
+import "fmt"
+
+func main(){
+    i := 9
+    if i < 5 {
+        fmt.Println(i , "is smaller than 5.")
+    } else if i < 0 {
+        fmt.Println(i , "is negative.")
+    } else {
+        fmt.Println(i, "is positive.")
+    }
+}
+```
 ### Operators
 > <, >, <=, >=, +, -, *, /
 ---
@@ -85,27 +153,190 @@ Arithmetic, assignment, logical/bitwise comparison
 TODO: description
 #### For / While / ForEach
 ```go
-for {...infinite loop...}
-for i := 0; i < n; i++ {...}
-for idx, movie := range movies {...}
-// put examples: continue, break, goto
+package main
+
+import "fmt"
+
+func main() {
+    //While loop
+    n := 0
+    for n < 3 {
+        n += 1
+        fmt.Println(n)
+    }
+    
+    //Infinite loop
+    for {
+        fmt.Println("never gonna stop")
+    }
+    
+    // Three component loop
+    
+    for i := 0; i < 10; i ++ {
+        fmt.Println(i)
+    }
+
+    // For each range loop
+    cardSuits := []string{"Hearts", "Diamonds", "Spades", "Clubs"}
+    for idx, suit := range cardSuits {
+        fmt.Println(idx, suit)
+    }
+    
+    // Continue
+    for i:=0; i < 10; i++ {
+        if i%2 == 0 {
+            continue
+        }
+        fmt.Println(i)
+    }
+    
+    // Break
+    for i:=0 ; i < 10; i++ {
+        if i%2 == 0 {
+            break
+        }
+        fmt.Println("This will not be printed")
+    }
+    // GOTO
+    gotoExample()
+}
+
+func gotoExample(){
+    fmt.Println("a")
+    goto END
+    fmt.Println("b")
+END: fmt.Println("c")
+}
+
 ```
 #### Switch
 ```go
-switch () {
-    case "x": doSomething()
-	default: doSomethingElse()
+package main
+
+import "fmt"
+
+func main() {
+    alphaSlice := []string{"a", "b", "c"}
+    for _, alpha := range alphaSlice {
+        switchExample(alpha)
+    }
+}
+func switchExample(alpha string) {
+    switch alpha {
+    case "a": fmt.Println("A")
+    case "b": fmt.Println("B")
+    default:
+        fmt.Println("Not A and Not B")
+    }
 }
 ```
 
 ---
 
 [//]: # ()
-## Fucntions / Methods, Structs & Interfaces
+## Functions / Methods, Structs & Interfaces
 TODO: description
 ### Functions / Methods
+Functions/ Methods are created with the following syntax
+`func functionName(argument argumentType) returnType {}`
+Below are some examples of function.
+```go
+package main
+
+import "fmt"
+
+var pl = fmt.Println
+
+func main() {
+    funcWithNoArgument()
+    pl("==========================")
+    funcWithSingleArgument("Single Argument")
+    pl("==========================")
+    funcWithMultipleArgument("function", "with mulitple argument")
+    pl("==========================")
+    s := funcWithSingleArgumentAndResp("Hello")
+    pl(s)
+    pl("==========================")
+    s1, s2 := funcWithSingleArgumentAndMultiResp("function with single argument and multi response")
+    pl(s1, s2)
+    pl("==========================")
+    boolean, number := funcWithMultiTypeResp()
+    pl(boolean, number)
+    pl("==========================")
+}
+func funcWithNoArgument(){
+    pl("Hello World")
+}
+
+func funcWithSingleArgument(arg string) {
+    pl(arg)
+}
+
+func funcWithMultipleArgument(arg1, arg2 string) {
+    pl(arg1,arg2)
+}
+
+func funcWithSingleArgumentAndResp(arg string) string {
+    pl(arg)
+    return "World"
+}
+func funcWithSingleArgumentAndMultiResp(arg string) (string, string) {
+    pl(arg)
+    return "Multi", "Response"
+}
+
+func funcWithMultiTypeResp() (bool, int) {
+    return true, 1
+}
+
+```
 ### Structs
+Go’s structs are typed collections of fields. They’re useful for grouping data together to form records.
+```go
+package main
+
+import "fmt"
+
+type Card struct {
+    cardSuit  string
+    cardFace  string
+}
+
+type deck = []Card
+
+func newDeck() deck {
+    cardSuits := []string{"Hearts", "Diamonds", "Spades", "Clubs"}
+    cardFace := []string{"Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"}
+    cardDeck := deck{}
+
+    for _, suit := range cardSuits {
+        for _, face := range cardFace {
+            card := Card{cardSuit: suit, cardFace: face}
+            cardDeck = append(cardDeck, card)
+        }
+    }
+    return cardDeck
+}
+
+// Functions can also benefit from Struct, by putting a receiver,  
+//functions can be used like this, card.getCardValue()
+func (c Card) getCardValue() {
+    fmt.Printf("%s of %s ", c.cardFace, c.cardSuit)
+}
+
+func main() {
+    cardDeck := newDeck()
+    cardDeck[1].getCardValue()
+    fmt.Printf("%+v", cardDeck)
+}
+```
 ### Interfaces
+### Pointers and Defer
+### Channels
+### WaitGroup
+### Mutex
+### Race Conditions
+### Deadlock
 
 
 
