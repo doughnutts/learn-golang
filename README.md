@@ -68,8 +68,9 @@ func main() {
 }
 ```
 #### Collections
-Array cannot be resized after declaring its length. <br>
-Slice dynamically sized, more flexible.
+**Array**: cannot be resized after declaring its length. <br>
+**Slice**: dynamically sized, more flexible. <br>
+**Map**: known as dict (python), hashes(ruby), map(Java); collection of key-value pairs
 ```go
 package main
 
@@ -105,7 +106,7 @@ func main() {
 
 ```
 #### Constants
-Constant declare with `const` keyword <br>
+Constant is declared with `const` keyword <br>
 Constant can be character, string, boolean or numeric value. <br>
 Cannot be declared using `:=` syntax
 
@@ -150,7 +151,7 @@ func main(){
 
 [//]: # ()
 ## Loops
-TODO: description
+*for* is Go only loop, Below is some example of using *for*
 #### For / While / ForEach
 ```go
 package main
@@ -235,11 +236,20 @@ func switchExample(alpha string) {
 
 [//]: # ()
 ## Functions / Methods, Structs & Interfaces
-TODO: description
+**Functions/Methods**: Declare using keyword `func`. 
+- Syntax: `func name(input string)string{}`
+<br> 
+
+**Structs**: Declare using `type`, name of struct and keyword `struct` with field/properties.
+- Syntax: `type NameOfStruct struct { fieldName string }` 
+<br>
+
+**Interface**: Declare using `type`, name of interface and keyword `interface` with method signature.
+- Syntax: `type NameOfInterface interface { getValue() string }`
+<br>
+
 ### Functions / Methods
-Functions/ Methods are created with the following syntax
-`func functionName(argument argumentType) returnType {}`
-Below are some examples of function.
+Below are some examples of functions.
 ```go
 package main
 
@@ -291,7 +301,7 @@ func funcWithMultiTypeResp() (bool, int) {
 
 ```
 ### Structs
-Go’s structs are typed collections of fields. They’re useful for grouping data together to form records.
+Below is an example of struct.
 ```go
 package main
 
@@ -331,6 +341,12 @@ func main() {
 }
 ```
 ### Interfaces
+Below is an example of interface
+```go
+type Shape interface {
+    Area() float64
+}
+```
 ### Pointers and Defer
 ### Channels
 ### WaitGroup
