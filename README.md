@@ -229,9 +229,9 @@ for idx, suit := range cardSuits {
 
 // While Loop
 for i := 0; i < 3 {
-	i += 1
-	fmt.Println(i)
-	// this will run 3 iterations
+    i += 1
+    fmt.Println(i)
+    // this will run 3 iterations
 }
 
 ...
@@ -275,7 +275,7 @@ switch diceRoll {
 [//]: # (Functions&Methods)
 ## Functions / Methods, Structs & Interfaces
 ### Syntax
-func `functionName`(`...argumentsWithType`) `...returnTypes` {...}
+func `functionName`(`...argumentsWithType`) (`...returnTypes`) {...}
 > functions can have 0..* arguments.
 > They can also return 0..* values
 
