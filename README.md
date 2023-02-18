@@ -7,9 +7,7 @@
       <br>
     </h1>
 </div>
-
 <h4 align="center">Build simple, secure, scalable systems with <a href="https://go.dev" target="_blank">Go</a>.</h4>
-
 <p align="center">
   <a href="">
       <img src="https://img.shields.io/badge/documentation-v1-1EAEDB.svg">
@@ -18,139 +16,176 @@
     <img src="https://img.shields.io/badge/language-go-ff69b4.svg?&amp;style=flat">
   </a>
 </p>
-
 <p align="center">
-    <a href="#variables-types-constants">Variables</a> •
-    <a href="#conditionals-operators">Conditionals</a> •
-    <a href="#loops-switchcase">Loops</a> •
+    <a href="#Setup">Setup</a> •
+    <a href="#types-variables-constants-zeros">Data Types</a> •
+    <a href="#operators-conditionals-loops">Control Structures</a> •
     <a href="#functions-structs-interfaces">Methods</a>
 </p>
 
-![screenshot](https://cool-thing.gif)
+<details>
+    <summary>Table of Contents</summary>
+    <ol>
+        <li>Chapter</li>
+        <ul>
+            <li>sub-chapter</li>
+        </ul>
+    </ol>
+</details>
 
-[//]: # ()
-## Variables, Data Types, Constants
-Containers for storing data values
+[//]: # (Setup)
+## Introduction & Setup
+- [Download & Install](https://go.dev/doc/install)
+- [Documentation](https://go.dev/doc/)
+- [Tips](https://go.dev/doc/effective_go)
 
+### New Project
+```bash
+go mod init ${company}.${tld}/${projectName}/${moduleName}
+```
+This will create a `go.mod` file to track your code dependencies
+```bash
+go get -u ${module}
+```
+This will install modules into your `go.mod` file and create a `go.sum` file to verify module checksums
+```bash
+go mod tidy # Will convert modules in go.mod to be use directly Default: #indirect
+go mod verify # Will verify module checksums
+go list -m all # List all mods
+go list -m -versions github.com/gin-gonic/gin # List available versions for a mod
+go mod why github.com/gin-gonic/gin # Shows dependency tree
+go mod graph # Show module requirement graph
+go mod vendor # Downloads modules to local folder (e.g node_modules)
+```
+
+### Base Go Project
+```go
+package main // Base package
+
+// Import required modules
+import "fmt" 
+// Declare package-scoped variable
+var greeting string
+// init will run once on start
+func init() { 
+	name := "User" // Declare function variable
+	greeting = "Welcome " + name
+}
+// Base main.go file should have the main method as an entry point
+func main() {
+	fmt.Println(greeting)
+}
+```
+
+---
+
+[//]: # (DataTypes)
+## Data Types, Variables, Constants & Zero-Values
+Containers for storing data values. Go is a strongly, statically typed language
 
 ### Syntax
 `keyword` `variableName` `type` = `value`
+> [**keyword**] `var` can be reassigned and redeclared.  `const` is fixed
 
 `variableName` **:=** `value`
 
-> [**Walrus** operator] - The **(var, const)** keyword can be omitted, type will be inferred based on the value
+> [**Walrus operator**] - The **`var` or `const`** keyword can be omitted, type will be inferred based on the value
 
-#### Numbers
+### Numbers: Integers and Floating Points
+Size and range of `Integers` in go is platform dependant.
+The default `int` or `uint` can be
+***(32 bits or 4 byte)*** in a **<u>32 bit machine</u>** or
+***(64 bits or 8 byte)*** in a **<u>64 bit machine</u>**
 ```go
 var (
-    uint8, // a.k.a byte
-	uint16,
-	uint32,
-	uint64,
-	int8,
-	int16,
-	int32, // a.k.a rune
-	int64, 
-	float32,
-	float64,
-	complex64,
-	complex128
+    // Signed Datatype
+    int_ int               // either 32 or 64 bit
+    int8_ int8             // -128:127
+    int16_ int16           // -32768:32767
+    int32_ int32           // -2147483648:2147483647 (alias = rune)
+    int64_ int64           // -9223372036854775808:9223372036854775807
+
+    // Unsigned Datatype
+    uint_ uint             // either 32 or 64 bit
+    uint8_ uint8           // 0:255 (alias = byte)
+    uint16_ uint16         // 0:65535
+    uint32_ uint32         // 0:4294967295
+    uint64_ uint64         // 0:18446744073709551615
+
+    uintptr_ uintptr       // Unsigned integer large enough to store uninterpreted bits of a pointer value
+	
+    float32_ float32       // 3.40282346638528859811704183484516925440e+38
+    float64_ float64       // 1.401298464324817070923729583289916131280e-45 - 
+    complex64_ complex64   // represents float32 real and imaginary data
+    complex128_ complex128 // represents float64 real and imaginary data
 )
 ```
-#### Strings, Booleans
+### Strings, Booleans
 ```go
-package main 
-import "fmt"
-func main() {
-    var s string = "string"
-    var b bool
-    fmt.Println(s, b)
-}
+var s string = "This is a string"
+var b bool = true
 ```
-#### Collections
-**Array**: cannot be resized after declaring its length. <br>
-**Slice**: dynamically sized, more flexible. <br>
-**Map**: known as dict (python), hashes(ruby), map(Java); collection of key-value pairs
+### Collections
 ```go
-package main
+var (
+    // Arrays are fixed length collection of elements of the same type
+    // ByValue
+    array           = [3]int{1, 2, 3}       // Fixed-size
+    ellipsesArray   = [...]int{1, 2, 3, 4}  // Compiler will identify length of array
+    kvpArray        = [3]string{1: " Two"}  // Can declare using 0-index
+    determineOnInit = []int{1, 2, 3}        // if size is not given, (idx + 1) becomes length
 
-import "fmt"
+    // Slices are abstractions over Arrays
+    // ByReference
+    slice          []int                    // Declare without specifying size and values. (== nil)
+    sliceFromArray = array[:len(array)]     // Slice made from an array
+    shorthandSlice = array[:]               // Shorthand method of above
+    pointerSlice   = &array                 // Another way of achieving the above
+    MaxSlice       = slice[:cap(slice)]     // Expand to maximum size
+    makeSlice      = make([]int, 3, 3)      // Make a slice of length 3 and capacity 3
 
-func main() {
-    var arr = [3]string {"This", "Is", "Array"} 
-    var slice = []string {"This", "Is", "Slice"}
-    var m = make(map[string]string)
-    m["key"] = "value"
-
-    fmt.Printf("%+v, length:%d \n", arr, len(arr))
-    fmt.Printf("%v, length:%d \n", slice, len(slice))
-    fmt.Println("map: ", m)
-}
-
+    map_ = make(map[string]string)          // Declare a map of key: string, value: string pairs
+)
 ```
-#### Zero values
+### Zero values
+Some Data Types have default values
 ```go
-package main
-
-import "fmt"
-
-func main() {
-    var i int //output 0
-    var f float32 //output 0
-    var b bool //output false
-    var s string // output ""
-    
-    fmt.Printf("%v, %v, %v, %q \n", i, f, b, s)
-}
-
-
+var i int       // == 0
+var f float32   // == 0
+var b bool      // == false
+var s string    // == ""
+var x []int     // == nil
 ```
-#### Constants
-Constant is declared with `const` keyword <br>
-Constant can be character, string, boolean or numeric value. <br>
-Cannot be declared using `:=` syntax
 
-```go
-package main
-
-import "fmt"
-
-func main()  {
-    const A = "Constant String"
-    //will give you this message when you run go run main.go
-    //cannot assign to A (untyped string constant "Constant String")
-    // A = "bc"
-
-    fmt.Println(A)
-}
-```
 ---
 
-[//]: # ()
-## Conditionals
+[//]: # (Control Structures)
+## Control Structures
 Arithmetic, assignment, logical/bitwise comparison
-### Conditionals
-```go
-package main
-import "fmt"
-
-func main(){
-    i := 9
-    if i < 5 {
-        fmt.Println(i , "is smaller than 5.")
-    } else if i < 0 {
-        fmt.Println(i , "is negative.")
-    } else {
-        fmt.Println(i, "is positive.")
-    }
-}
-```
 ### Operators
-> <, >, <=, >=, +, -, *, /
----
+Symbol | Description | Example
+:---:|---|---
+<| Less than | 1 &nbsp; < &nbsp; 9
+\>| Bigger than | 9 &nbsp; > &nbsp; 1
+<=| less than or equal | 10 <= 10
+>=| bigger than or equal | 10 >= 10
++| Add | (numbers) 1 + 1 = 2 <br> (strings) "Hello" + " World" = "Hello World" 
+-| Subtract | 3 - 2 = 1
+*| Multiply | 2 * 2 = 4
+/| Divide | 4 / 2 = 2
+%| Modulus | 10 % 3 = 1
+&&| Logical And | (1 == 1) && ("a" == "a") = true
+&#124; &#x7C; | Logical Or | (1 == 1) &#124; &#x7C; ("a" == "b") = true
+```
 
-[//]: # ()
-## Loops
+### Conditionals & Loops
+```go
+if, else , else if
+infinite for, for 0, for index_range, while
+switch 
+```
+
+### Loops
 *for* is Go only loop, Below is some example of using *for*
 #### For / While / ForEach
 ```go
