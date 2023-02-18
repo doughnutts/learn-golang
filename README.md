@@ -145,6 +145,8 @@ var (
     makeSlice      = make([]int, 3, 3)      // Make a slice of length 3 and capacity 3
 
     map_ = make(map[string]string)          // Declare a map of key: string, value: string pairs
+    // new() allocates memory but is not initialized, zeroed storage
+    // make() allocates memory and initialize, non-zeroed storage
 )
 ```
 ### Zero values
@@ -168,7 +170,7 @@ Symbol | Description | Example
 <| Less than | 1 &nbsp; < &nbsp; 9
 \>| Bigger than | 9 &nbsp; > &nbsp; 1
 <=| less than or equal | 10 <= 10
->=| bigger than or equal | 10 >= 10
+\>=| bigger than or equal | 10 >= 10
 +| Add | (numbers) 1 + 1 = 2 <br> (strings) "Hello" + " World" = "Hello World" 
 -| Subtract | 3 - 2 = 1
 *| Multiply | 2 * 2 = 4
@@ -176,218 +178,216 @@ Symbol | Description | Example
 %| Modulus | 10 % 3 = 1
 &&| Logical And | (1 == 1) && ("a" == "a") = true
 &#124; &#x7C; | Logical Or | (1 == 1) &#124; &#x7C; ("a" == "b") = true
-```
-
 ### Conditionals & Loops
+#### if / else if / else
 ```go
-if, else , else if
-infinite for, for 0, for index_range, while
-switch 
+import "math/rand"
+...
+// Give the random a seed number
+rand.Seed(time.Now().UnixNano())
+// Generate a random number between 1 - 6
+var number int = (rand.Intn(6) + 1)
+
+func report(num int) {
+	fmt.Println("number is:", num)
+}
+
+// if, else if, else example
+if number >= 1 && number < 3 {
+    report(number) // number is 1 or 2
+} else if number == 3 || number <= 4 {
+    report(number) // number is 3 or 4
+} else {
+    report(number) // number is 5 or 6
+}
 ```
-
-### Loops
-*for* is Go only loop, Below is some example of using *for*
-#### For / While / ForEach
+#### For Loops
+Go only has `for` loops, therefore concepts such as `while` and `forEach` are done differently
 ```go
-package main
-
-import "fmt"
-
-func main() {
-    //While loop
-    n := 0
-    for n < 3 {
-        n += 1
-        fmt.Println(n)
-    }
-    
-    //Infinite loop
-    for {
-        fmt.Println("never gonna stop")
-    }
-    
-    // Three component loop
-    
-    for i := 0; i < 10; i ++ {
-        fmt.Println(i)
-    }
-
-    // For each range loop
-    cardSuits := []string{"Hearts", "Diamonds", "Spades", "Clubs"}
-    for idx, suit := range cardSuits {
-        fmt.Println(idx, suit)
-    }
-    
-    // Continue
-    for i:=0; i < 10; i++ {
-        if i%2 == 0 {
-            continue
-        }
-        fmt.Println(i)
-    }
-    
-    // Break
-    for i:=0 ; i < 10; i++ {
-        if i%2 == 0 {
-            break
-        }
-        fmt.Println("This will not be printed")
-    }
-    // GOTO
-    gotoExample()
+// An infinite loop
+for {
+    fmt.Println("Will run forever")
 }
 
-func gotoExample(){
-    fmt.Println("a")
-    goto END
-    fmt.Println("b")
-END: fmt.Println("c")
+...
+
+// Goto declaration
+greeting:
+    fmt.Println("You got the Joker!")
+// declare a slice of card suits
+var cardSuits = []string{"Clubs", "Diamonds", "Hearts", "Spades", "Joker"}
+// For index range
+for idx, suit := range cardSuits {
+    if suit == "Joker" {
+        // goto: will exit the loop and go to the defined greeting method
+        goto greeting
+    }
+    fmt.Printf("The order is: %v, suit: %v", idx+1, day)
 }
 
+...
+
+// While Loop
+for i := 0; i < 3 {
+	i += 1
+	fmt.Println(i)
+	// this will run 3 iterations
+}
+
+...
+
+// 3 Component Loop with Continue and Break
+for i := 0; i < 3; i++ {
+	mod := i%2
+	if mod == 0 {
+	    continue // will stop current iteration and increment i
+    }
+	if mod == 1 {
+	    break // will exit the loop
+    }
+}
 ```
 #### Switch
 ```go
-package main
-
-import "fmt"
-
-func main() {
-    alphaSlice := []string{"a", "b", "c"}
-    for _, alpha := range alphaSlice {
-        switchExample(alpha)
-    }
-}
-func switchExample(alpha string) {
-    switch alpha {
-    case "a": fmt.Println("A")
-    case "b": fmt.Println("B")
+// Give the random a seed number
+rand.Seed(time.Now().UnixNano())
+// Generate a random number between 1 - 7 on purpose
+var diceRoll int = (rand.Intn(7) + 1)
+// This demonstrates the multiple ways to group cases
+switch diceRoll {
+    // single case match
+    case 1:
+        fmt.Println("You got the lowest number!")
+    // multiple case matching
+    case 2, 3, 4: fmt.Println("You got a low number!")
+	// fallthrough will also run the methods in the case below it
+    case 5:
+        fallthrough
+    case 6:
+        fmt.Println("You got a high number!")
     default:
-        fmt.Println("Not A and Not B")
-    }
+        fmt.Println("This is not part of the dice!")
 }
 ```
 
 ---
 
-[//]: # ()
+[//]: # (Functions&Methods)
 ## Functions / Methods, Structs & Interfaces
-**Functions/Methods**: Declare using keyword `func`. 
-- Syntax: `func name(input string)string{}`
-<br> 
+### Syntax
+func `functionName`(`...argumentsWithType`) `...returnTypes` {...}
+> functions can have 0..* arguments.
+> They can also return 0..* values
 
-**Structs**: Declare using `type`, name of struct and keyword `struct` with field/properties.
-- Syntax: `type NameOfStruct struct { fieldName string }` 
-<br>
+type `typeName` interface {...}
+> `interfaces` are abstract types that define a set of method signatures
+> All methods declared in an interface must be implemented
 
-**Interface**: Declare using `type`, name of interface and keyword `interface` with method signature.
-- Syntax: `type NameOfInterface interface { getValue() string }`
-<br>
-
-### Functions / Methods
-Below are some examples of functions.
+type `typeName` struct {...}
+> `structs` are custom concrete types
+> Types that implement all the methods is considered to implement the interface
 ```go
-package main
-
-import "fmt"
-
-var pl = fmt.Println
-
-func main() {
-    funcWithNoArgument()
-    pl("==========================")
-    funcWithSingleArgument("Single Argument")
-    pl("==========================")
-    funcWithMultipleArgument("function", "with mulitple argument")
-    pl("==========================")
-    s := funcWithSingleArgumentAndResp("Hello")
-    pl(s)
-    pl("==========================")
-    s1, s2 := funcWithSingleArgumentAndMultiResp("function with single argument and multi response")
-    pl(s1, s2)
-    pl("==========================")
-    boolean, number := funcWithMultiTypeResp()
-    pl(boolean, number)
-    pl("==========================")
-}
-func funcWithNoArgument(){
-    pl("Hello World")
-}
-
-func funcWithSingleArgument(arg string) {
-    pl(arg)
-}
-
-func funcWithMultipleArgument(arg1, arg2 string) {
-    pl(arg1,arg2)
-}
-
-func funcWithSingleArgumentAndResp(arg string) string {
-    pl(arg)
-    return "World"
-}
-func funcWithSingleArgumentAndMultiResp(arg string) (string, string) {
-    pl(arg)
-    return "Multi", "Response"
-}
-
-func funcWithMultiTypeResp() (bool, int) {
-    return true, 1
-}
-
-```
-### Structs
-Below is an example of struct.
-```go
-package main
-
-import "fmt"
-
-type Card struct {
-    cardSuit  string
-    cardFace  string
-}
-
-type deck = []Card
-
-func newDeck() deck {
-    cardSuits := []string{"Hearts", "Diamonds", "Spades", "Clubs"}
-    cardFace := []string{"Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"}
-    cardDeck := deck{}
-
-    for _, suit := range cardSuits {
-        for _, face := range cardFace {
-            card := Card{cardSuit: suit, cardFace: face}
-            cardDeck = append(cardDeck, card)
-        }
-    }
-    return cardDeck
-}
-
-// Functions can also benefit from Struct, by putting a receiver,  
-//functions can be used like this, card.getCardValue()
-func (c Card) getCardValue() {
-    fmt.Printf("%s of %s ", c.cardFace, c.cardSuit)
-}
-
-func main() {
-    cardDeck := newDeck()
-    cardDeck[1].getCardValue()
-    fmt.Printf("%+v", cardDeck)
-}
-```
-### Interfaces
-Below is an example of interface
-```go
+// Define a shape interface
 type Shape interface {
     Area() float64
 }
+// Define a Circle struct which is a type of shape
+type Circle struct {
+    radius float64
+}
+// Implement the methods from the Shape interface
+func (c Circle) Area() float64 {
+    return math.Pi * c.radius * c.redius
+}
+// Function that takes in an argument of Shape
+func PrintArea(s Shape) {
+    fmt.Println("Area:", s.Area())
+}
+// Initialize a Circle type and call the PrintArea function
+func main() {
+    c := Circle{radius: 5}
+    PrintArea(c)
+}
 ```
-### Pointers and Defer
+An example of a function that takes in multiple argument types and returns multiple types
+```go
+// This is an empty interface. It does not contain any method signature in its declaration
+var interface_ interface{}
+// the 3-dots ligature is called a variadic function
+func Println(i ...interface{}) (i int, err error) {...}
+// An example of the above. the '_' underscore is a blank identifier. to indicate an unused variable
+int_, _ := fmt.Println("a-string", 69, []float64{1.2, 3.4})
+```
+
+---
+
+## Pointers and Values
+
+### Defer
+## Concurrency & goroutines
+in Go, a goroutine is a lightweight thread of execution that are used to perform concurrent operations
+to create a new goroutine, we use the 'go' keyword
+```go
+func add(a, b int, c chan int) {
+	sum := a + b
+	c <- sum
+}
+
+func main() {
+	c := make(chan int)
+	go add(1, 2, c)
+	sum := <-c
+	fmt.Println("Sum:", sum)
+}
+```
+```go
+func goroutinesMutexExample() {
+	wait := &sync.WaitGroup{}
+	mut := &sync.RWMutex{}
+	endpoints := []string{
+		"https://google.com",
+		"https://github.com",
+		"https://fb.com",
+		"https://twitter.com",
+		"https://go.dev",
+	}
+
+	signals := make([]string, 0)
+
+	getStatus := func(endpoint string) {
+		defer wait.Done()
+		res, err := http.Get(endpoint)
+		if err != nil {
+			fmt.Println("[Error] -", endpoint)
+		} else {
+			mut.Lock()
+			signals = append(signals, endpoint)
+			mut.Unlock()
+			fmt.Printf("%v for %v\n", res.StatusCode, endpoint)
+		}
+	}
+
+	for _, endpoint := range endpoints {
+		wait.Add(1)
+		go getStatus(endpoint)
+	}
+	wait.Wait()
+	fmt.Println(signals)
+
+	/*
+		[_Mutex_] - Mutual Exclusion Lock
+			- Zero value for a Mutes is unlocked
+			- Must not be copied after run
+	*/
+}
+```
 ### Channels
 ### WaitGroup
 ### Mutex
 ### Race Conditions
 ### Deadlock
+
+## File, IO, Http
 
 
 
