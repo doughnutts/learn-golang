@@ -21,7 +21,8 @@
     <a href="#types-variables-constants-zeros">Data Types</a> •
     <a href="#operators-conditionals-loops">Control Structures</a> •
     <a href="#functions-structs-interfaces">Methods</a> •
-    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a>
+    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a> •
+    <a href="#file-io-http">Others</a>
 </p>
 
 <details>
@@ -382,122 +383,98 @@ int_, _ := fmt.Println("a-string", 69, []float64{1.2, 3.4})
 
 [//]: # (Concurrency)
 ## Concurrency & goroutines
-### Defer
-**defer** ensures a function call will be performed later in the program execution, usually use for cleanup purposes.
+in Go, a `goroutine` is a lightweight thread of execution that are used to perform concurrent operations
+to create a new goroutine, we use the `go` keyword.
+`WaitGroups` and `Channels` are synchronization primitives that can be used to coordinate the execution of concurrent code
+
+### WaitGroups
+`WaitGroups` are best used when you want to wait for a specific set of `goroutines` to complete before continuing with your program.
+It uses a counter that can be **incremented** and **decremented** by using the `Add()` and `Done()` methods.
+When the count reaches zero, the `Wait()` method unblocks the calling `goroutine`
 ```go
-package main
+// Initialize the WaitGroup, RWMutex, list of tasks and a slice to hold the results
+wait := &sync.WaitGroup{}
+mut := &sync.RWMutex{}
+// Initialize a list of tasks
+tasks := []string{ "task_1", "task_2", "task_3", }
+results := make([]string, 0)
 
-import "fmt"
-
-func main() {
-    defer fmt.Println("world")
-
-    fmt.Println("hello")
+// Define a function to handle the response
+getResult := func(task string) {
+    // wait.Done() -> will decrement the WaitGroup counter
+    // the `defer` keyword will delay the execution until the end of the function
+    defer wait.Done()
+    // Perform the concurrent task 
+    result := concurrentTask(task)
+    // Perform a Read Write lock  
+    mut.Lock()
+    results = append(results, result)
+    // Release the Lock after write is done
+    mut.Unlock()
 }
-```
-### Goroutines & Channels
-In Go, a **goroutine** is a lightweight thread of execution that are used to perform concurrent operations.
-To create a new goroutine, we use the `go` keyword. <br>
-**Channels** are the pipes that connect concurrent goroutines. This allows sending of values from one goroutine to another vice versa.
-<br>
-To create a channel, we use `make(chan value-type)`.
+// Loop through the tasks and mark them as `goroutines`
+// increment the WaitGroup counter
+for _, task := range tasks {
+    wait.Add(1)
+    go getResult(task)
+}
+wait.Wait()
+fmt.Printf("Results: %v\n", results)
 
+/*
+    Mutex = Mutual Exclusion Lock
+      - Zero value for a Mutes is unlocked
+      - Must not be copied after run
+*/
+```
+### Channels
+`Channels` allow for communication and synchronization between `goroutines`.
+It is used to pass data between `goroutines` and to signal events. It can also be buffered, meaning they can store a certain number of messages before blocking the sender. 
+`Channels` are best used when you want to coordinate the flow of data and events between multiple goroutines 
 ```go
 func add(a, b int, c chan int) {
 	sum := a + b
-    // Sending value into channel
+	// <- arrow on right-hand-side of channel is to set the value
 	c <- sum
 }
 
 func main() {
 	c := make(chan int)
+	// goroutine to do simple addition, passing in the channel
 	go add(1, 2, c)
-    // Retrieving value from channel
+	// <- arrow on left-hand-side of channel is to get the value
 	sum := <-c
-	fmt.Println("Sum:", sum)
+	fmt.Println("Sum:", sum) // Output: 3
 }
 ```
-### WaitGroup
-**waitgroup** can be use for multiple goroutines to finish.
-
+### Using `WaitGroups` and `Channels` together
+Two `goroutines` are created, therefore we add 2 to the `WaitGroup`.
+The first function will wait until the channel recieves a value before completing
 ```go
-package main
+// Waitgroup
+wait := &sync.WaitGroup{}
+// Initialize Channel with buffer
+myChannel := make(chan int, 2)
+// Add 2 count to WaitGroup because there are 2 `go` goroutines called below
+wait.Add(2)
+// [Receive Only] <- arrow on left-hand-side of function argument
+go func(ch <-chan int, wg *sync.WaitGroup) {
+    val, isOpen := <-myChannel
+    fmt.Println("Channel isOpen: %v, Value: %v \n", isOpen, val)
+    wg.Done()
+}(myChannel, wait)
 
-import (
-    "fmt"
-    "math/rand"
-    "sync"
-    "time"
-)
+// [Send Only] <- arrow on right-hand-side of function argument
+go func(ch chan<- int, wg *sync.WaitGroup) {
+    myChannel <- 5
+    close(myChannel)
+    wg.Done()
+}(myChannel, wait)
 
-// wg is the pointer to a waitgroup
-// name is a string to identify the function call
-// limit the number of numbers the function will print
-// sleep is the number of seconds before the function prints the next value
-func randSleep(wg *sync.WaitGroup, name string, limit int, sleep int) {
-    defer wg.Done()
-    for i := 1; i <= limit; i++ {
-        fmt.Println(name, rand.Intn(i))
-        time.Sleep(time.Duration(sleep * int(time.Second)))
-
-    }
-
-}
-func main() {
-    wg := new(sync.WaitGroup)
-    wg.Add(2)
-    go randSleep(wg, "first:", 10, 2)
-    go randSleep(wg, "second:", 3, 2)
-    wg.Wait()
-
-}
+wait.Wait()
 ```
-### Mutex
-**Mutex** ensures only one goroutine can access a resource at a time.
-```go
-func goroutinesMutexExample() {
-	wait := &sync.WaitGroup{}
-	mut := &sync.RWMutex{}
-	endpoints := []string{
-		"https://google.com",
-		"https://github.com",
-		"https://fb.com",
-		"https://twitter.com",
-		"https://go.dev",
-	}
-
-	signals := make([]string, 0)
-
-	getStatus := func(endpoint string) {
-		defer wait.Done()
-		res, err := http.Get(endpoint)
-		if err != nil {
-			fmt.Println("[Error] -", endpoint)
-		} else {
-			mut.Lock()
-			signals = append(signals, endpoint)
-			mut.Unlock()
-			fmt.Printf("%v for %v\n", res.StatusCode, endpoint)
-		}
-	}
-
-	for _, endpoint := range endpoints {
-		wait.Add(1)
-		go getStatus(endpoint)
-	}
-	wait.Wait()
-	fmt.Println(signals)
-
-	/*
-		[_Mutex_] - Mutual Exclusion Lock
-			- Zero value for a Mutes is unlocked
-			- Must not be copied after run
-	*/
-}
-```
-
 #### Race Conditions
-Race conditions happen when two goroutines are accessing the same variable concurrently. 
+Race conditions happen when two goroutines are accessing the same variable concurrently.
 - **Shared Data** : Multiple goroutines sharing the same data without any `lock` or `unlock` will result in data race conditions. <br>
 - **Critical Sections** : Critical sections are block of code where goroutine is attempting to write a variable. Using `lock` and `unlock` would ensures the critical section to be ***atomic***.
 
@@ -513,8 +490,11 @@ Common reasons are that
 - no other goroutine has access to the channel or the lock,
 - a group of goroutines are waiting for each other and none of them is able to proceed.
 
-## File, IO, Http
-### File
+---
+
+## Others
+### File, IO
+#### File
 Reading and Writing of file can be done with the help of `os` package.
 
 ```go
@@ -533,7 +513,7 @@ var d deck
 }
 
 ```
-### IO
+#### IO
 **IO** package allow the program to read and capture the information to a variable. Below is an example of how IO can be used.
 ```go
 package main
@@ -577,7 +557,10 @@ func main() {
 }
 ```
 
-### Http
+
+
+### Http with Gin-Gonic
+#### Http
 In Go, `Http` package can be used to make GET, POST. <br>
 **GET**
 ```go
@@ -635,20 +618,5 @@ func main() {
 
 
 
-
-
-
-[//]: # (Use this template)
-## Main Topic
-description
-### Sub-Header (Items)
-#### thing (Points for each item)
-
-> **Info**
-> description, [link](https://link.to) `go-command`
-
----
-
 > [Credit-Link-Here](https://link.me) &nbsp;&middot;&nbsp;
 > [Some-Other-Thing](https://link.me)
-
