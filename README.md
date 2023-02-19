@@ -21,7 +21,8 @@
     <a href="#types-variables-constants-zeros">Data Types</a> •
     <a href="#operators-conditionals-loops">Control Structures</a> •
     <a href="#functions-structs-interfaces">Methods</a> •
-    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a>
+    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a> •
+    <a href="#file-io-http">Others</a>
 </p>
 
 <details>
@@ -382,97 +383,114 @@ int_, _ := fmt.Println("a-string", 69, []float64{1.2, 3.4})
 
 [//]: # (Concurrency)
 ## Concurrency & goroutines
-### Defer
-in Go, a goroutine is a lightweight thread of execution that are used to perform concurrent operations
-to create a new goroutine, we use the 'go' keyword
+in Go, a `goroutine` is a lightweight thread of execution that are used to perform concurrent operations
+to create a new goroutine, we use the `go` keyword.
+`WaitGroups` and `Channels` are synchronization primitives that can be used to coordinate the execution of concurrent code
+
+### WaitGroups
+`WaitGroups` are best used when you want to wait for a specific set of `goroutines` to complete before continuing with your program.
+It uses a counter that can be **incremented** and **decremented** by using the `Add()` and `Done()` methods.
+When the count reaches zero, the `Wait()` method unblocks the calling `goroutine`
+```go
+// Initialize the WaitGroup, RWMutex, list of tasks and a slice to hold the results
+wait := &sync.WaitGroup{}
+mut := &sync.RWMutex{}
+// Initialize a list of tasks
+tasks := []string{ "task_1", "task_2", "task_3", }
+results := make([]string, 0)
+
+// Define a function to handle the response
+getResult := func(task string) {
+    // wait.Done() -> will decrement the WaitGroup counter
+    // the `defer` keyword will delay the execution until the end of the function
+    defer wait.Done()
+    // Perform the concurrent task 
+    result := concurrentTask(task)
+    // Perform a Read Write lock  
+    mut.Lock()
+    results = append(results, result)
+    // Release the Lock after write is done
+    mut.Unlock()
+}
+// Loop through the tasks and mark them as `goroutines`
+// increment the WaitGroup counter
+for _, task := range tasks {
+    wait.Add(1)
+    go getResult(task)
+}
+wait.Wait()
+fmt.Printf("Results: %v\n", results)
+
+/*
+    Mutex = Mutual Exclusion Lock
+      - Zero value for a Mutes is unlocked
+      - Must not be copied after run
+*/
+```
+### Channels
+`Channels` allow for communication and synchronization between `goroutines`.
+It is used to pass data between `goroutines` and to signal events. It can also be buffered, meaning they can store a certain number of messages before blocking the sender. 
+`Channels` are best used when you want to coordinate the flow of data and events between multiple goroutines 
 ```go
 func add(a, b int, c chan int) {
 	sum := a + b
+	// <- arrow on right-hand-side of channel is to set the value
 	c <- sum
 }
 
 func main() {
 	c := make(chan int)
+	// goroutine to do simple addition, passing in the channel
 	go add(1, 2, c)
+	// <- arrow on left-hand-side of channel is to get the value
 	sum := <-c
-	fmt.Println("Sum:", sum)
+	fmt.Println("Sum:", sum) // Output: 3
 }
 ```
+### Using `WaitGroups` and `Channels` together
+Two `goroutines` are created, therefore we add 2 to the `WaitGroup`.
+The first function will wait until the channel recieves a value before completing
 ```go
-func goroutinesMutexExample() {
-	wait := &sync.WaitGroup{}
-	mut := &sync.RWMutex{}
-	endpoints := []string{
-		"https://google.com",
-		"https://github.com",
-		"https://fb.com",
-		"https://twitter.com",
-		"https://go.dev",
-	}
+// Waitgroup
+wait := &sync.WaitGroup{}
+// Initialize Channel with buffer
+myChannel := make(chan int, 2)
+// Add 2 count to WaitGroup because there are 2 `go` goroutines called below
+wait.Add(2)
+// [Receive Only] <- arrow on left-hand-side of function argument
+go func(ch <-chan int, wg *sync.WaitGroup) {
+    val, isOpen := <-myChannel
+    fmt.Println("Channel isOpen: %v, Value: %v \n", isOpen, val)
+    wg.Done()
+}(myChannel, wait)
 
-	signals := make([]string, 0)
+// [Send Only] <- arrow on right-hand-side of function argument
+go func(ch chan<- int, wg *sync.WaitGroup) {
+    myChannel <- 5
+    close(myChannel)
+    wg.Done()
+}(myChannel, wait)
 
-	getStatus := func(endpoint string) {
-		defer wait.Done()
-		res, err := http.Get(endpoint)
-		if err != nil {
-			fmt.Println("[Error] -", endpoint)
-		} else {
-			mut.Lock()
-			signals = append(signals, endpoint)
-			mut.Unlock()
-			fmt.Printf("%v for %v\n", res.StatusCode, endpoint)
-		}
-	}
-
-	for _, endpoint := range endpoints {
-		wait.Add(1)
-		go getStatus(endpoint)
-	}
-	wait.Wait()
-	fmt.Println(signals)
-
-	/*
-		[_Mutex_] - Mutual Exclusion Lock
-			- Zero value for a Mutes is unlocked
-			- Must not be copied after run
-	*/
-}
+wait.Wait()
 ```
-### Channels
-### WaitGroup
-### Mutex
-### Race Conditions
-### Deadlock
-
-## File, IO, Http
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[//]: # (Use this template)
-## Main Topic
-description
-### Sub-Header (Items)
-#### thing (Points for each item)
-
-> **Info**
-> description, [link](https://link.to) `go-command`
 
 ---
 
+## Others
+### File, IO
+### Http with Gin-Gonic
+
+
+
+
+
+
+
+
+
+
+
+
+
 > [Credit-Link-Here](https://link.me) &nbsp;&middot;&nbsp;
 > [Some-Other-Thing](https://link.me)
-
