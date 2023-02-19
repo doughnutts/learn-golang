@@ -494,6 +494,8 @@ Common reasons are that
 
 ## Others
 ### File, IO
+There are instances where additional information are needed from files, this can be achieved using the `os` package.
+
 #### File
 Reading and Writing of file can be done with the help of `os` package.
 
@@ -514,7 +516,26 @@ var d deck
 
 ```
 #### IO
-**IO** package allow the program to read and capture the information to a variable. Below is an example of how IO can be used.
+One of a way to retrieve inputs from CLI is shown below. 
+```go
+// Reading from cmd line.
+func PrintHelloWorld() {
+	fmt.Printf("1. Print Hello World \n 2. End Program \n")
+	var option int
+	_, err := fmt.Scanf("%d", &option)
+	handleErr(err, 1)
+	if option == 1 {
+        fmt.Println("Hello World")
+	} else if option == 2 {
+		fmt.Println("GoodBye!")
+		os.Exit(0)
+	} else {
+		fmt.Println("Wrong input selected. \n Program is exiting")
+		os.Exit(0)
+	}
+}
+```
+Example of using Pipe to read and write.
 ```go
 package main
 
@@ -560,54 +581,60 @@ func main() {
 
 
 ### Http with Gin-Gonic
-#### Http
-In Go, `Http` package can be used to make GET, POST. <br>
-**GET**
-```go
-resp, err := http.Get("http://google.com")
-if err != nil {
-    fmt.Println(err)
-}
-defer resp.Body.Close()
-```
-**POST**
-```go
-package main
+Gin is an HTTP Web Framework written in Go. 
 
-import (
-	"bytes"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-)
+Below is an example of using Gin, for more examples, [click here.]("https://github.com/gin-gonic/examples") 
 
+```go
+// Post
 func main() {
-	httpposturl := "https://example.com/api/users"
-	fmt.Println("HTTP JSON POST URL:", httpposturl)
+    router := gin.Default()
+    
+    router.POST("/post", func(c *gin.Context) {
+        id := c.Query("id")
+        page := c.DefaultQuery("page", "0")
+        name := c.PostForm("name")
+        message := c.PostForm("message")
+        
+        fmt.Printf("id: %s; page: %s; name: %s; message: %s", id, page, name, message)
+    })
+    
+    router.Run(":8080")
+}
+// Get
+func main() {
+    router := gin.Default()
 
-	var jsonData = []byte(`{
-		"name": "John",
-		"job": "Developer"
-	}`)
-	request, error := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
-	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
-
-	client := &http.Client{}
-	response, error := client.Do(request)
-	if error != nil {
-		panic(error)
-	}
-	defer response.Body.Close()
-
-	fmt.Println("response Status:", response.Status)
-	fmt.Println("response Headers:", response.Header)
-	body, _ := ioutil.ReadAll(response.Body)
-	fmt.Println("response Body:", string(body))
-
+// Query string parameters are parsed using the existing underlying request object.
+// The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
+    router.GET("/welcome", func(c *gin.Context) {
+        firstname := c.DefaultQuery("firstname", "Guest")
+        lastname := c.Query("lastname") // shortcut for c.Request.URL.Query().Get("lastname")
+    
+        c.String(http.StatusOK, "Hello %s %s", firstname, lastname)
+    })
+    router.Run(":8080")
+}
+// HTTP Method
+func main() {
+    // Creates a gin router with default middleware:
+    // logger and recovery (crash-free) middleware
+    router := gin.Default()
+    
+    router.GET("/someGet", getting)
+    router.POST("/somePost", posting)
+    router.PUT("/somePut", putting)
+    router.DELETE("/someDelete", deleting)
+    router.PATCH("/somePatch", patching)
+    router.HEAD("/someHead", head)
+    router.OPTIONS("/someOptions", options)
+    
+    // By default it serves on :8080 unless a
+    // PORT environment variable was defined.
+    router.Run()
+    // router.Run(":3000") for a hard coded port
 }
 ```
-
-
 
 
 
