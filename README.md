@@ -20,7 +20,8 @@
     <a href="#Setup">Setup</a> •
     <a href="#types-variables-constants-zeros">Data Types</a> •
     <a href="#operators-conditionals-loops">Control Structures</a> •
-    <a href="#functions-structs-interfaces">Methods</a>
+    <a href="#functions-structs-interfaces">Methods</a> •
+    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a>
 </p>
 
 <details>
@@ -158,7 +159,23 @@ var b bool      // == false
 var s string    // == ""
 var x []int     // == nil
 ```
+### Pointers and Values
+A pointer is a variable that stores the memory address of another variable.
+Pointers are used to pass variables by reference and manipulate data structures directly in memory.
 
+`&` pointer to memory address (reference).
+<br>
+`*` resolved value from memory address pointer (value)
+```go
+// Declare variable x
+var x int = 5
+// Declare a pointer of type *int which points to the address of x using the '&' symbol
+var xPtr *int = &x
+
+// To access the value
+fmt.Println("Value of x:", x)       // Output 5
+fmt.Println("Value of xPtr:", *ptr) // Output: 5
+```
 ---
 
 [//]: # (Control Structures)
@@ -309,6 +326,48 @@ func main() {
     PrintArea(c)
 }
 ```
+A `struct` can also implement multiple interfaces
+```go
+// Define an interface for Daytime
+type Daytime interface {
+    SunPosition()
+    GetTemperature()
+}
+// Define an interface for Nighttime
+type Nightime interface {
+    MoonPhase()
+    GetTemperature()
+}
+// Define an Environment struct that can be a Day or Night type
+type Environment struct {
+    sunPosition string
+    moonPhase string
+    temperature float64
+}
+// Implement all the methods in the interface
+func (e Environment) SunPosition() string {
+    fmt.Printf("The Sun is at %v\n", e.sunPosition)
+    return e.sunPosition
+}
+func (e Environment) MoonPhase() string {
+    fmt.Printf("The Moon is %V\n", e.moonPhase)
+    return e.moonPhase
+}
+func (e Environment) GetTemperature() float64 {
+	fmt.Printf("The temperature now is: %v\n", e.temperature)
+    return e.temperature
+}
+func main() {
+    environment := Environment{
+        sunPosition: "Midday",
+        moonPosition: nil,
+        temperature: 30.5
+    }
+	// The Environment struct can now be a combination of either interface
+    var daytime Daytime = environment
+    var nighttime Nighttime = environment
+}
+```
 An example of a function that takes in multiple argument types and returns multiple types
 ```go
 // This is an empty interface. It does not contain any method signature in its declaration
@@ -321,10 +380,9 @@ int_, _ := fmt.Println("a-string", 69, []float64{1.2, 3.4})
 
 ---
 
-## Pointers and Values
-
-### Defer
+[//]: # (Concurrency)
 ## Concurrency & goroutines
+### Defer
 in Go, a goroutine is a lightweight thread of execution that are used to perform concurrent operations
 to create a new goroutine, we use the 'go' keyword
 ```go
