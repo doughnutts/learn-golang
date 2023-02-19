@@ -383,21 +383,77 @@ int_, _ := fmt.Println("a-string", 69, []float64{1.2, 3.4})
 [//]: # (Concurrency)
 ## Concurrency & goroutines
 ### Defer
-in Go, a goroutine is a lightweight thread of execution that are used to perform concurrent operations
-to create a new goroutine, we use the 'go' keyword
+**defer** ensures a function call will be performed later in the program execution, usually use for cleanup purposes.
+```go
+package main
+
+import "fmt"
+
+func main() {
+    defer fmt.Println("world")
+
+    fmt.Println("hello")
+}
+```
+### Goroutines & Channels
+In Go, a **goroutine** is a lightweight thread of execution that are used to perform concurrent operations.
+To create a new goroutine, we use the `go` keyword. <br>
+**Channels** are the pipes that connect concurrent goroutines. This allows sending of values from one goroutine to another vice versa.
+<br>
+To create a channel, we use `make(chan value-type)`.
+
 ```go
 func add(a, b int, c chan int) {
 	sum := a + b
+    // Sending value into channel
 	c <- sum
 }
 
 func main() {
 	c := make(chan int)
 	go add(1, 2, c)
+    // Retrieving value from channel
 	sum := <-c
 	fmt.Println("Sum:", sum)
 }
 ```
+### WaitGroup
+**waitgroup** can be use for multiple goroutines to finish.
+
+```go
+package main
+
+import (
+    "fmt"
+    "math/rand"
+    "sync"
+    "time"
+)
+
+// wg is the pointer to a waitgroup
+// name is a string to identify the function call
+// limit the number of numbers the function will print
+// sleep is the number of seconds before the function prints the next value
+func randSleep(wg *sync.WaitGroup, name string, limit int, sleep int) {
+    defer wg.Done()
+    for i := 1; i <= limit; i++ {
+        fmt.Println(name, rand.Intn(i))
+        time.Sleep(time.Duration(sleep * int(time.Second)))
+
+    }
+
+}
+func main() {
+    wg := new(sync.WaitGroup)
+    wg.Add(2)
+    go randSleep(wg, "first:", 10, 2)
+    go randSleep(wg, "second:", 3, 2)
+    wg.Wait()
+
+}
+```
+### Mutex
+**Mutex** ensures only one goroutine can access a resource at a time.
 ```go
 func goroutinesMutexExample() {
 	wait := &sync.WaitGroup{}
@@ -439,14 +495,134 @@ func goroutinesMutexExample() {
 	*/
 }
 ```
-### Channels
-### WaitGroup
-### Mutex
-### Race Conditions
-### Deadlock
+
+#### Race Conditions
+Race conditions happen when two goroutines are accessing the same variable concurrently. 
+- **Shared Data** : Multiple goroutines sharing the same data without any `lock` or `unlock` will result in data race conditions. <br>
+- **Critical Sections** : Critical sections are block of code where goroutine is attempting to write a variable. Using `lock` and `unlock` would ensures the critical section to be ***atomic***.
+
+
+#### Deadlock
+Deadlocks happen when group of goroutines are waiting for each other but not able to proceed. <br> Go is able to detect when program as a whole freezes but not when subset of goroutines are stuck.
+
+A goroutine can get stuck
+- either because it’s waiting for a **channel** or
+- because it is waiting for one of the **locks** in the sync package.
+
+Common reasons are that
+- no other goroutine has access to the channel or the lock,
+- a group of goroutines are waiting for each other and none of them is able to proceed.
 
 ## File, IO, Http
+### File
+Reading and Writing of file can be done with the help of `os` package.
 
+```go
+func (d deck) saveToFile(filename string) error {
+	return os.WriteFile(filename, []byte(d.toString()), 0666)
+}
+
+func newDeckFromFile(filename string) deck {
+bs, err := os.ReadFile(filename)
+if err != nil {
+    fmt.Println("ERROR: ", err)
+    os.Exit(1)
+    }
+var d deck
+    fmt.Println(bs)
+}
+
+```
+### IO
+**IO** package allow the program to read and capture the information to a variable. Below is an example of how IO can be used.
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"os"
+)
+
+// Your function
+func foo(w *io.PipeWriter) {
+	defer w.Close()
+	// Write a message to pipe writer
+	fmt.Fprintln(w, "Hello Medium")
+}
+
+func main() {
+	// Create a pipe
+	pr, pw := io.Pipe()
+
+	// Pass writer to function
+	go foo(pw)
+
+	// Variable to get standard output of function
+	var b bytes.Buffer
+
+	// Create a multi writer that is a combination of
+	// os.Stdout and our variable byte buffer
+	mw := io.MultiWriter(os.Stdout, &b)
+	// Copies reader content to standard output
+	_, err := io.Copy(mw, pr)
+
+	if err != nil {
+		panic(err)
+	}
+
+	// Optional: verify data
+	fmt.Println(b.String())
+}
+```
+
+### Http
+In Go, `Http` package can be used to make GET, POST. <br>
+**GET**
+```go
+resp, err := http.Get("http://google.com")
+if err != nil {
+    fmt.Println(err)
+}
+defer resp.Body.Close()
+```
+**POST**
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+)
+
+func main() {
+	httpposturl := "https://example.com/api/users"
+	fmt.Println("HTTP JSON POST URL:", httpposturl)
+
+	var jsonData = []byte(`{
+		"name": "John",
+		"job": "Developer"
+	}`)
+	request, error := http.NewRequest("POST", httpposturl, bytes.NewBuffer(jsonData))
+	request.Header.Set("Content-Type", "application/json; charset=UTF-8")
+
+	client := &http.Client{}
+	response, error := client.Do(request)
+	if error != nil {
+		panic(error)
+	}
+	defer response.Body.Close()
+
+	fmt.Println("response Status:", response.Status)
+	fmt.Println("response Headers:", response.Header)
+	body, _ := ioutil.ReadAll(response.Body)
+	fmt.Println("response Body:", string(body))
+
+}
+```
 
 
 
