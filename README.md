@@ -104,7 +104,9 @@
 ```bash
 go mod init ${company}.${tld}/${projectName}/${moduleName}
 ```
-This will create a `go.mod` file to track your code dependencies
+This will create a `go.mod` file to track and manage your code dependencies
+> **Note** It is not mandatory to run this. `Modules` was introduced in Go `1.11` onwards.
+> Read more about the changes [here](https://devopscon.io/blog/go-1-11-new-modules/)
 ```bash
 go get -u ${module}
 ```
@@ -550,7 +552,6 @@ Common reasons are that
 - a group of goroutines are waiting for each other and none of them is able to proceed.
 
 ---
-
 ## Others
 ### File, IO
 There are instances where additional information are needed from files, this can be achieved using the `os` package.
@@ -724,6 +725,142 @@ func ParseJsonFromWeb() {
     fmt.Printf("%v\n", onlineData)
 }
 ```
+
+...
+
+[//]: # (Frameworks)
+## Frameworks
+### microservices
+### ORM
+
+### RPC - Protobuf
+Google `Protobuf` provides language independence so allow serialization / deserialization that is language independent.
+It also provides efficient data compaction. 
+A sample `Protobuf` file is provided below with base Data-Types
+```protobuf
+// Represents the version of Protobuf we ae using
+syntax = "proto3";
+// Used for conflict resolution if there are multiple members with the same name
+package theater;
+// Options specific to the generated language. The example below is for generating Java
+option java_package = "com.example.theater";
+
+// The theater service definition.
+service Theater {
+  // ends a rpc method `GetTheater` with `TheaterRequest` and expects `TheaterReply`
+  rpc GetTheater (TheaterRequest) returns (TheaterReply) {}
+}
+
+// The request message. Base class for the object which would be created
+// Attributes of the `TheaterRequest` class with datatype and position of the tag in the schema
+// New tags should increment the position integer
+message TheaterRequest {
+  string name = 1;
+  // Numbers
+  int32 capacity = 2;
+  int64 number = 3;
+  float base_price = 4;
+  // Boolean
+  bool is_available = 5;
+  // Enum
+  enum PAYMENT_TYPE {
+    CASH = 0;
+    CREDIT = 1;
+    DEBIT = 2;
+  }
+  PAYMENT_TYPE payment = 6;
+  // List
+  repeated string snacks = 7;
+  // Map
+  map<string, int32> ticket_prices = 8;
+  // Nested Class
+  TheaterOwner owner = 9;
+}
+
+message TheaterOwner {
+  string name = 1;
+  string address = 2;
+  string error = 3;
+}
+
+// The response message. Base class for the object which would be created
+message TheaterReply {
+  string message = 1;
+}
+
+```
+#### RPC Server
+```go
+type server struct {
+    // UnimplementedTheaterServer must be embedded to have forward compatible implementations.
+    pb.UnimplementedTheaterServer
+}
+
+func (s *server) GetTheater(ctx context.Context, in *pb.TheaterRequest) (*pb.TheaterReply, error) {
+    log.Printf("Received: %v", in.GetName())
+    return &pb.TheaterReply{Message: "Theater: " + in.GetName()}, nil
+}
+
+func main() {
+    flag.Parse()
+    lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+    if err != nil {...}
+    s := grpc.NewServer()
+    pb.RegisterTheaterServer(s, &server{})
+    log.Printf("server listening at %v", lis.Addr())
+    if err := s.Serve(lis); err != nil {
+        log.Fatalf("failed to serve: %v", err)
+    }
+}
+```
+#### RPC Client
+```go
+func main() {
+	flag.Parse()
+	// Set up a connection to the server.
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
+
+	// Contact the server and print out its response.
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.SayHello(ctx, &pb.HelloRequest{Name: *name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting: %s", r.GetMessage())
+
+	// Add New
+	r, err = c.SayHelloAgain(ctx, &pb.HelloRequest{Name: *name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting: %s", r.GetMessage())
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 [//]: # (> [Some-Link-Here]&#40;https://link.me&#41; &nbsp;&middot;&nbsp;)
 [//]: # (> [Some-Other-Link]&#40;https://link.me&#41;)
