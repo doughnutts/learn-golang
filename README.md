@@ -495,155 +495,176 @@ Common reasons are that
 ## Others
 ### File, IO
 There are instances where additional information are needed from files, this can be achieved using the `os` package.
-
-#### File
-Reading and Writing of file can be done with the help of `os` package.
-
+#### File Operations
 ```go
-func (d deck) saveToFile(filename string) error {
-	return os.WriteFile(filename, []byte(d.toString()), 0666)
+func WriteToFile() {
+    // Create the file using the `os` mod. Remember to close the file
+    file, err := os.Create("./greeting.txt")
+    content := "Hello, World!"
+    defer file.Close()
+    // Handle error if exists
+    if err != nil {...}
+    // Write to file
+    length, err := io.WriteString(file, content)
+    // Can also use below method for writing to file
+    os.WriteFile(file.Name(), []byte(content), 0666)
+    if err != nil {...}
+    fmt.Printf("length of file is: %v\n", length)	
 }
 
-func newDeckFromFile(filename string) deck {
-bs, err := os.ReadFile(filename)
-if err != nil {
-    fmt.Println("ERROR: ", err)
-    os.Exit(1)
-    }
-var d deck
-    fmt.Println(bs)
+func ReadFromFile(filename string) {
+    databyte, err := os.ReadFile(filename)
+    // Handle error if exists
+    if err != nil {...}
+    fmt.Println("File Contents: ", string(databyte))
 }
-
 ```
 #### IO
-One of a way to retrieve inputs from CLI is shown below. 
+One of a way to retrieve inputs from CLI is shown below.
 ```go
-// Reading from cmd line.
-func PrintHelloWorld() {
-	fmt.Printf("1. Print Hello World \n 2. End Program \n")
-	var option int
-	_, err := fmt.Scanf("%d", &option)
-	handleErr(err, 1)
-	if option == 1 {
-        fmt.Println("Hello World")
-	} else if option == 2 {
-		fmt.Println("GoodBye!")
-		os.Exit(0)
-	} else {
-		fmt.Println("Wrong input selected. \n Program is exiting")
-		os.Exit(0)
-	}
-}
-```
-Example of using Pipe to read and write.
-```go
-package main
+    // Option 1: Using fmt.Scan to variable address
+    var firstName string
+    fmt.Println("Enter your first name:")
+    fmt.Scan(&firstName)
 
+    // Option 2" Using a buffered reader
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter Weight:")
+	weightInput, err := reader.ReadString('\n')
+	if err != nil {...}
+    age, err := strc.ParseFloat(str.TrimSpace(weightInput), 64)
+	
+	fmt.Printf("Name: %v, Age: %v \n", firstName, age)
+```
+#### Http Server with Gin-Gonic
+Gin is an HTTP Web Framework written in Go. 
+Below is an example of using Gin, for more examples, [click here.]("https://github.com/gin-gonic/examples") 
+```go
+import "github.com/gin-gonic/gin"
+...
+// Declare a new instance of gin
+router := gin.Default()
+// Add any middleware functions
+router.Use(
+	CustomHandler()
+    gin.Recovery(),
+    // RateLimiting
+    // ErrorHandling
+    // CORS
+    // SecurityConfigs
+)
+// Define your own middleware
+func CustomHandler() gin.HandlerFunc {
+    return func(c *gin.Context) {...}
+}
+
+// Add a handler if API endpoint does not exist
+router.NoRoute(func(c *gin.Context) {
+    c.AbortWithError(http.StatusNotFound, errors.New("PAGE NOT FOUND"))
+})
+
+// Grouping helps in reducing boilerplate code by gathering all endpoints that have similar paths
+apiGroup := router.Group("/api")
+// This will resolve to http://localhost:8080/api/{id}
+apiGroup.GET("/:id", func(c *gin.Context) {
+	// Get param value from URI 
+	id := c.Params.ByName("id")
+	// Get query parameters ?age=69 
+	other := c.Query("age")
+    result, err := backendCall(id)
+    if err != nil {
+		// Will return HTTP400 with the error
+        c.AbortWithError(http.StatusBadRequest, err)
+        return
+    }
+	// Will return HTTP200 with the message
+    c.JSON(http.StatusOK, gin.H{"message": result})
+    return
+})
+// Other HTTP types
+router.POST("/post", handlePostCall)
+router.PUT("/put/:id", handlePutCall)
+router.DELETE("/delete/:id", handleDeleteCall)
+router.PATCH("/patch/:id", handlePatchCall)
+router.HEAD("/", handleHeadCall)
+router.OPTIONS("/", handleOptionsCall)
+
+// Start the router. If argument not given, it defaults to :3000
+router.Run(":8080")
+```
+#### Http Client
+```go
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"os"
+    "net/http"
+    "net/url"	
 )
 
-// Your function
-func foo(w *io.PipeWriter) {
-	defer w.Close()
-	// Write a message to pipe writer
-	fmt.Fprintln(w, "Hello Medium")
-}
+const myurl = "https://httpbin.org/get?hello=world"
+// Convenient library to parse URIs
+result, err := url.Parse(myurl)
+if err != nill {...}
+fmt.Printf("Scheme: %v, Host: %v, Path: %v, Port: %v, RawQuery: %v, Query: %v\n",
+    result.Scheme, result.Host, result.Path, result.Port(), result.RawQuery, result.Query())
 
-func main() {
-	// Create a pipe
-	pr, pw := io.Pipe()
+// Http GET call. defer to close the response body read buffer
+response, err := http.Get(myurl)
+if err != nil {...}
+defer response.Body.Close()
 
-	// Pass writer to function
-	go foo(pw)
-
-	// Variable to get standard output of function
-	var b bytes.Buffer
-
-	// Create a multi writer that is a combination of
-	// os.Stdout and our variable byte buffer
-	mw := io.MultiWriter(os.Stdout, &b)
-	// Copies reader content to standard output
-	_, err := io.Copy(mw, pr)
-
-	if err != nil {
-		panic(err)
-	}
-
-	// Optional: verify data
-	fmt.Println(b.String())
-}
+var responseString str.Builder
+content, _ := io.ReadAll(response.Body)
+fmt.Printf("Data: %v\n", responseString.String())
 ```
-
-
-
-### Http with Gin-Gonic
-Gin is an HTTP Web Framework written in Go. 
-
-Below is an example of using Gin, for more examples, [click here.]("https://github.com/gin-gonic/examples") 
-
+#### Parsing JSON Data
 ```go
-// Post
-func main() {
-    router := gin.Default()
-    
-    router.POST("/post", func(c *gin.Context) {
-        id := c.Query("id")
-        page := c.DefaultQuery("page", "0")
-        name := c.PostForm("name")
-        message := c.PostForm("message")
-        
-        fmt.Printf("id: %s; page: %s; name: %s; message: %s", id, page, name, message)
-    })
-    
-    router.Run(":8080")
-}
-// Get
-func main() {
-    router := gin.Default()
+import "encoding/json"
 
-// Query string parameters are parsed using the existing underlying request object.
-// The request responds to a url matching:  /welcome?firstname=Jane&lastname=Doe
-    router.GET("/welcome", func(c *gin.Context) {
-        firstname := c.DefaultQuery("firstname", "Guest")
-        lastname := c.Query("lastname") // shortcut for c.Request.URL.Query().Get("lastname")
-    
-        c.String(http.StatusOK, "Hello %s %s", firstname, lastname)
-    })
-    router.Run(":8080")
+// the right-hand-side tags define how the struct should be displayed in JSON
+// `omitempty` = hide attribute from output if empty
+// `-` = hide from output
+type course struct {
+    Name     string   `json:"courseName"`
+    Price    int      `json:"price"`
+    Tags     []string `json:"tags,omitempty"`
+    Password string   `json:"-"`
 }
-// HTTP Method
-func main() {
-    // Creates a gin router with default middleware:
-    // logger and recovery (crash-free) middleware
-    router := gin.Default()
-    
-    router.GET("/someGet", getting)
-    router.POST("/somePost", posting)
-    router.PUT("/somePut", putting)
-    router.DELETE("/someDelete", deleting)
-    router.PATCH("/somePatch", patching)
-    router.HEAD("/someHead", head)
-    router.OPTIONS("/someOptions", options)
-    
-    // By default it serves on :8080 unless a
-    // PORT environment variable was defined.
-    router.Run()
-    // router.Run(":3000") for a hard coded port
+
+func ParseJsonFromStruct() {
+    myCourse := []course{
+    {"tess", 123, []string{"1", "2", "3"}, "qwe"},
+    {"ting", 456, nil, "asd"},
+    }
+    // Marshal the struct into a JSON object with Indentation
+    finalJson, err := json.MarshalIndent(myCourse, "", "\t")
+    if err != nil {...}
+    fmt.Printf("%s\n", finalJson)
+}
+
+func ParseJsonFromWeb() {
+    jsonDataFromWeb := []byte(`
+    {
+        "courseName": "test",
+        "price": 123,
+        "tags": ["1", "2", "3"]
+    }
+    `)
+    var myCourse course
+    // Helper function to check validity of JSON 
+    if json.Valid(jsonDataFromWeb) {
+        // Unmarshal data to pointer address of course 
+        json.Unmarshal(jsonDataFromWeb, &myCourse)
+        fmt.Printf("%#v\n", myCourse)
+    } else {
+        fmt.Println("JSON not valid")
+    }
+
+	// Can also Unmarshal into a Key Value Map
+    var onlineData map[string]interface{}
+    json.Unmarshal(jsonDataFromWeb, &onlineData)
+    fmt.Printf("%#v\n", onlineData)
+    fmt.Printf("%v\n", onlineData)
 }
 ```
 
-
-
-
-
-
-
-
-
-
-> [Credit-Link-Here](https://link.me) &nbsp;&middot;&nbsp;
-> [Some-Other-Thing](https://link.me)
+[//]: # (> [Some-Link-Here]&#40;https://link.me&#41; &nbsp;&middot;&nbsp;)
+[//]: # (> [Some-Other-Link]&#40;https://link.me&#41;)
