@@ -17,22 +17,81 @@
   </a>
 </p>
 <p align="center">
-    <a href="#Setup">Setup</a> •
-    <a href="#types-variables-constants-zeros">Data Types</a> •
-    <a href="#operators-conditionals-loops">Control Structures</a> •
-    <a href="#functions-structs-interfaces">Methods</a> •
-    <a href="#goroutines-waitgroups-channels-mutex">Concurrency</a> •
-    <a href="#file-io-http">Others</a>
+    <a href="#introduction--setup">Setup</a> •
+    <a href="#data-types-variables-constants--zero-values">Data Types</a> •
+    <a href="#control-structures">Control Structures</a> •
+    <a href="#functions--methods-structs--interfaces">Methods</a> •
+    <a href="#concurrency--goroutines">Concurrency</a> •
+    <a href="#others">Others</a>
 </p>
 
 <details>
     <summary>Table of Contents</summary>
     <ol>
-        <li>Chapter</li>
+        <li>
+            <a href="#introduction--setup">Introduction & Setup</a>
         <ul>
-            <li>sub-chapter</li>
+            <li><a href="#new-project">New Project</a></li>
+            <li><a href="#base-go-project">Base Go Project</a></li>
         </ul>
+        </li>
+        <li>
+            <a href="#data-types-variables-constants--zero-values">Data Types, Variables, Constants & Zero-Values</a>
+            <ul>
+                <li><a href="#syntax">Syntax</a></li>
+                <li><a href="#numbers-integers--floating-points">Numbers: Integers & Floating Points</a></li>
+                <li><a href="#strings--booleans">Strings & Booleans</a></li>
+                <li><a href="#collections">Collections</a></li>
+                <li><a href="#zero-values">Zero Values</a></li>
+                <li><a href="#pointers--values">Pointers & Values</a></li>
+            </ul>
+        </li>
+        <li>
+            <a href="#control-structures">Control Structures</a>
+            <ul>
+                <li>
+                    <a href="#conditionals--loops">Conditionals & Loops</a>
+                    <ul>
+                        <li><a href="#if--else-if--else">if / else if / else</a></li>
+                        <li><a href="#for-loops">For Loops</a></li>
+                        <li><a href="#switch">Switch</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <a href="#functions--methods-structs--interfaces">Functions / Methods, Structs & Interfaces</a>
+            <ul>
+                <li><a href="#syntax-1">Syntax</a></li>
+            </ul>
+        </li>
+        <li>
+            <a href="#concurrency--goroutines">Concurrency & goroutines</a>
+            <ul>
+                <li><a href="#waitgroups">WaitGroups</a></li>
+                <li><a href="#channels">Channels</a></li>
+                <li><a href="#using-waitgroups-and-channels-together">Using WaitGroups and Channels together</a></li>
+                <li><a href="#race-conditions">Race Conditions</a></li>
+                <li><a href="#desklock">Deadlock</a></li>
+            </ul>
+        </li>
+        <li>
+            <a href="#others">Others</a>
+            <ul>
+                <li>
+                    <a href="#file-io">File, IO</a>
+                    <ul>
+                        <li><a href="#file-operations">File Operations</a></li>
+                        <li><a href="#io">IO</a></li>
+                    </ul>
+                </li>
+                <li><a href="#http-server-with-gin-gonic">Http Server with Gin-Gonic</a></li>
+                <li><a href="#http-client">Http Client</a></li>
+                <li><a href="#parsing-json-data">Parsing JSON Data</a></li>
+            </ul>
+        </li>
     </ol>
+
 </details>
 
 [//]: # (Setup)
@@ -122,7 +181,7 @@ var (
     complex128_ complex128 // represents float64 real and imaginary data
 )
 ```
-### Strings, Booleans
+### Strings & Booleans
 ```go
 var s string = "This is a string"
 var b bool = true
@@ -151,7 +210,7 @@ var (
     // make() allocates memory and initialize, non-zeroed storage
 )
 ```
-### Zero values
+### Zero Values
 Some Data Types have default values
 ```go
 var i int       // == 0
@@ -160,7 +219,7 @@ var b bool      // == false
 var s string    // == ""
 var x []int     // == nil
 ```
-### Pointers and Values
+### Pointers & Values
 A pointer is a variable that stores the memory address of another variable.
 Pointers are used to pass variables by reference and manipulate data structures directly in memory.
 
