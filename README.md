@@ -732,7 +732,135 @@ func ParseJsonFromWeb() {
 ## Frameworks
 ### microservices
 ### ORM
+ORM  `Object-relational mapping` allows user to query and manipulate data from a database using an object-oriented paradigm.
+[GORM](https://gorm.io/docs/index.html) is an ORM Library that is written for GO which aims to be developer friendly. 
 
+A simple demo using `GORM` is provided below.
+```go
+package main
+import (
+    "gorm.io/gorm"
+    "gorm.io/driver/postgres"
+)
+
+type Product struct {
+    gorm.Model
+    Code string
+    Price uint
+}
+
+func main() {
+    var prodList = []Product{{Code: "A3", Price: 10}, {Code: "A3", Price: 15}, {Code: "A4", Price: 17}}
+    
+    dsn := "host=localhost user=postgres password=postgres dbname=shops port=9920 sslmode=disable TimeZone=Asia/Shanghai"
+    db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+    
+    if err != nil {
+        panic("Connection to DB failed")
+    }
+    
+    db.Create(&Product{Code: "A1", Price: 10}) //Pass pointer of data to Create 
+    db.Model(&Product{}).Create(map[string]interface{} {"Code":"A5", "Price":29}) //Create from map
+    db.CreateInBatches(&prodList)
+    
+    
+    var p Product
+    db.First(&p, 1) // Find product with primary key
+    db.First(&p, "code=?", "A1") // Find product with code A1
+    
+    db.Model(&p).Update("Price", 15) // Update product price to 15
+    db.Model(&p).Updates(Product{Price:20, Code: "A2"}) // Update multiple fields
+    
+    db.Delete(&p, 1) // Delete product
+    
+}
+```
+
+Create With Association
+```go
+type Product struct {
+    gorm.Model
+    code string
+    price uint
+    supplier Supplier
+}
+
+type Supplier struct {
+    gorm.Model
+    name string 
+    contactNo string
+    
+}
+
+// Insert into `products`, `suppliers` respectively.
+db.Create(&Product{code: "A1", price: 10, supplier: Supplier{Name: "BiscultGem.Co", ContactNo: "11111111"}})
+
+
+```
+Samples of Retrieval. For more, [click here.](https://gorm.io/docs/query.html)
+
+```go
+// Select one record, no specific order
+db.Take(&p)
+
+// Get Count of records found
+result := db.First(&p)
+result.RowsAffected // Count of records found
+result.Error // Errors or nil
+
+// Using db.model, SELECT * FROM products ORDER BY products.Code LIMIT 1
+result := map[string]interface{}{}
+db.Model(&Product{}).first(&result)
+
+//Retrieve all
+
+result := db.Find(&p)
+p.RowsAffected
+p.Error
+
+// Conditions
+//Find first matching record
+db.Where("code = ?", "A1").First(&p)
+
+//Find all matching records
+db.Where("code <> ?", "A1").Find(&p)
+
+//Like
+db.Where("code LIKE ?", "%A%").Find(&p)
+
+//AND
+db.Where("code = ? AND price = ?", "A1", 10).Find(&p)
+
+//Struct
+db.Where(&Product{code: "A1", price: 10 }).First(&p)
+
+//Map
+db.Where(map[string]interface{}{"code":"A1", "price":10}).Find(&p)
+
+//Select * From product where code = "A1". 
+//GORM Will only query with non-zero fields, therefore if your field value is 0, '', false or other zero values,it won't be used to build query conditions.
+db.Where(&Product{code:"A1", price:0}).Find(&p)
+```
+
+Raw SQL 
+```go
+type Result struct {
+    ID int
+    Name string
+    Age int
+}
+
+var result Result
+db.Row("SELECT id, name, age FROM users WHERE name =?", 3).Scan(&result)
+```
+
+Method Chaining. To view more examples, [click here](https://gorm.io/docs/method_chaining.html)
+```go
+query := db.Where("code = ?", "A1") 
+query.Where("price > ?", 10).First(&p)   // SELECT * from products WHERE code = "A1" AND price > 10
+query.Where("price > ?"  15).First(&p2) // SELECT * from products WHERE code = "A1" AND price > 10 AND price > 20
+
+```
 ### RPC - Protobuf
 Google `Protobuf` provides language independence so allow serialization / deserialization that is language independent.
 It also provides efficient data compaction. 
