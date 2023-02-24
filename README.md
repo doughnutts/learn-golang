@@ -978,16 +978,18 @@ var collection *mongo.Collection
 // runs only on init. once
 func init() {
 	clientOptions := options.Client().ApplyURI(connectionString)
+    
 	/*
-			Context: Whenever making calls to machines outside your own machine
-					 type, deadlines, cancellation signals, other request-scoped-values
-					 how long connection, what happens when dies, if active context to work on
+	Context: Whenever making calls to machines outside your own machine
+	type, deadlines, cancellation signals, other request-scoped-values
+	how long connection, what happens when dies, if active context to work on
 
-			Background: never cancelled, no values, no deadline
-			_TODO: Based on the context you are using from
-			WithValue: retains copy of parent, only for request-scoped data that transits processes & APIs,
-		 			   not for passing optional params to functions
+	Background: never cancelled, no values, no deadline
+	_TODO: Based on the context you are using from
+	WithValue: retains copy of parent, only for request-scoped data that transits processes & APIs,
+	not for passing optional params to functions
 	*/
+    
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	helper.CheckNilErr(err)
 	fmt.Println("MongoDB connection successful")
