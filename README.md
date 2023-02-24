@@ -970,7 +970,44 @@ func main() {
 
 
 ### Database - MongoDB
-### GraphQL
+
+```go
+func getMovie(movieId string) (primitive.M, error) {
+	id, _ := primitive.ObjectIDFromHex(movieId)
+	filter := bson.M{"_id": id}
+	// [Mongo bson]
+    // M = shorter & clearer filter declaration, order doesnt matter
+    // D = if you have a sort having multiple fields
+
+	result := collection.FindOne(context.Background(), filter)
+	var movie primitive.M
+	decodeErr := result.Decode(&movie)
+	if decodeErr != nil {
+		fmt.Println("[Decode_Err]", decodeErr)
+		return nil, decodeErr
+	}
+	return movie, nil
+}
+
+func GetMovie(c *gin.Context) {
+    // set header
+    movie, err := getMovie(c.Params.ByName("id"))
+    if len(movie) == 0 && err != nil {
+    c.AbortWithError(http.StatusNotFound, err)
+    return
+    }
+    c.JSON(http.StatusOK, movie)
+    return
+}
+
+---
+	
+r := gin.Default()
+
+movieGroup := r.Group("/api/movies")
+movieGroup.GET("/:id", controller.GetMovie)
+log.Fatal(http.ListenAndServe(":8000", r))
+```
 
 
 
