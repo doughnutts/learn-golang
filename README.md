@@ -971,6 +971,52 @@ func main() {
 
 ### Database - MongoDB
 
+Connecting to Mongo and insertion of object sample.
+```go
+var collection *mongo.Collection
+
+// runs only on init. once
+func init() {
+	clientOptions := options.Client().ApplyURI(connectionString)
+	/*
+			Context: Whenever making calls to machines outside your own machine
+					 type, deadlines, cancellation signals, other request-scoped-values
+					 how long connection, what happens when dies, if active context to work on
+
+			Background: never cancelled, no values, no deadline
+			_TODO: Based on the context you are using from
+			WithValue: retains copy of parent, only for request-scoped data that transits processes & APIs,
+		 			   not for passing optional params to functions
+	*/
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	helper.CheckNilErr(err)
+	fmt.Println("MongoDB connection successful")
+	collection = client.Database(dbName).Collection(colName)
+	fmt.Println("Collection instance is ready")
+}
+
+func insertMovie(movie model.Netflix) primitive.ObjectID {
+    result, err := collection.InsertOne(context.Background(), movie)
+    helper.CheckNilErr(err)
+
+    return result.InsertedID.(primitive.ObjectID)
+}
+
+func InsertMovie(c *gin.Context) {
+    var movie = &model.Netflix{}
+    err := c.Bind(movie)
+    if err != nil {
+        c.AbortWithStatus(http.StatusBadRequest)
+    return
+}
+
+movie.Id = insertMovie(*movie)
+c.JSON(http.StatusCreated, movie)
+
+}
+
+```
+Simple retrieval sample using `bson.M`.
 ```go
 func getMovie(movieId string) (primitive.M, error) {
 	id, _ := primitive.ObjectIDFromHex(movieId)
@@ -993,8 +1039,8 @@ func GetMovie(c *gin.Context) {
     // set header
     movie, err := getMovie(c.Params.ByName("id"))
     if len(movie) == 0 && err != nil {
-    c.AbortWithError(http.StatusNotFound, err)
-    return
+        c.AbortWithError(http.StatusNotFound, err)
+        return
     }
     c.JSON(http.StatusOK, movie)
     return
@@ -1008,13 +1054,6 @@ movieGroup := r.Group("/api/movies")
 movieGroup.GET("/:id", controller.GetMovie)
 log.Fatal(http.ListenAndServe(":8000", r))
 ```
-
-
-
-
-
-
-
 
 
 
